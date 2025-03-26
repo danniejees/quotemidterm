@@ -8,6 +8,11 @@ function handleGetCategories() {
     $query = 'SELECT * FROM categories WHERE 1=1';
     $params = [];
 
+    if ($id && !is_numeric($id)) {
+        echo json_encode(['message' => 'Invalid category_id']);
+        return;
+    }
+
     if ($id) {
         $query .= ' AND id = :id';
         $params[':id'] = $id;
@@ -35,6 +40,13 @@ function handlePostCategory() {
 
     $category = $input['category'];
 
+    $checkStmt = $pdo->prepare('SELECT id FROM categories WHERE category = :category');
+    $checkStmt->execute([':category' => $category]);
+    if ($checkStmt->fetchColumn()) {
+        echo json_encode(['message' => 'Category already exists']);
+        return;
+    }
+
     $stmt = $pdo->prepare('INSERT INTO categories (category) VALUES (:category) RETURNING id');
     $stmt->execute([':category' => $category]);
     $category_id = $stmt->fetchColumn();
@@ -54,6 +66,13 @@ function handlePutCategory() {
     $id = $input['id'];
     $category = $input['category'];
 
+    $checkStmt = $pdo->prepare('SELECT id FROM categories WHERE id = :id');
+    $checkStmt->execute([':id' => $id]);
+    if (!$checkStmt->fetchColumn()) {
+        echo json_encode(['message' => 'category_id Not Found']);
+        return;
+    }
+
     $stmt = $pdo->prepare('UPDATE categories SET category = :category WHERE id = :id');
     $stmt->execute([':category' => $category, ':id' => $id]);
 
@@ -63,8 +82,8 @@ function handlePutCategory() {
 function handleDeleteCategory() {
     global $pdo;
 
-    if (!isset($_GET['id'])) {
-        echo json_encode(['message' => 'No Categories Found']);
+    if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+        echo json_encode(['message' => 'category_id Not Found']);
         return;
     }
 
