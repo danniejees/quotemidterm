@@ -56,11 +56,15 @@ if ($method === 'GET' && strpos($endpoint, '/quotes') === 0) {
     $stmt->execute($values);
     $quotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    if ($quotes) {
-        respond(200, $quotes);
-    } else {
-        respond(404, ['message' => 'No Quotes Found']);
+   if ($quotes) {
+    if (count($quotes) === 1 && isset($params['id'])) {
+        respond(200, $quotes[0]);
     }
+    respond(200, $quotes);
+} else {
+    respond(404, ['message' => 'No Quotes Found']);
+}
+
 }
 
 if ($method === 'GET' && strpos($endpoint, '/authors') === 0) {
