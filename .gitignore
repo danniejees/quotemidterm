@@ -1,0 +1,14 @@
+# PHP
+/vendor/
+/composer.phar
+.env
+
+# PostgreSQL
+*.sql
+*.sql.gz
+
+# VS Code (optional)
+.vscode/
+
+# Logs
+*.log
