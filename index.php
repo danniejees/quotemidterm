@@ -28,10 +28,11 @@ if (strpos($uri, '/api') !== 0) {
 $endpoint = substr($uri, 4);
 
 if ($method === 'GET' && strpos($endpoint, '/quotes') === 0) {
-    $sql = 'SELECT quotes.id, quote, authors.author, categories.category 
-            FROM quotes 
-            JOIN authors ON quotes.author_id = authors.id 
-            JOIN categories ON quotes.category_id = categories.id';
+    $sql = 'SELECT quotes.id AS id, quotes.quote AS quote, authors.author AS author, categories.category AS category 
+        FROM quotes 
+        JOIN authors ON quotes.author_id = authors.id 
+        JOIN categories ON quotes.category_id = categories.id';
+
     $conditions = [];
     $values = [];
 
