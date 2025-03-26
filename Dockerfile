@@ -1,20 +1,20 @@
-# Use an official PHP runtime as a parent image
-FROM php:7.4-apache
+# Start with a PHP image
+FROM php:8.1-apache
 
-# Set the working directory inside the container
-WORKDIR /var/www/html
+# Install dependencies for PostgreSQL PDO
+RUN apt-get update && apt-get install -y libpq-dev && docker-php-ext-install pdo pdo_pgsql
 
-# Copy the local files to the container
-COPY . .
-
-# Install PostgreSQL client (needed for connecting to PostgreSQL)
-RUN apt-get update && apt-get install -y libpq-dev
-
-# Enable Apache mod_rewrite for URL rewriting (if needed for your PHP app)
+# Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
-# Expose port 80
-EXPOSE 80
+# Install Composer (optional if you are using it for dependencies)
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Start Apache service
-CMD ["apache2-foreground"]
+# Copy project files
+COPY . /var/www/html/
+
+# Set working directory
+WORKDIR /var/www/html/
+
+# Expose the default port for Apache
+EXPOSE 80
