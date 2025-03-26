@@ -15,9 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 if (strpos($uri, '/api') === 0) {
-
     $endpoint = substr($uri, 4);
-
     parse_str($_SERVER['QUERY_STRING'] ?? '', $params);
 
     if ($method === 'GET' && strpos($endpoint, '/quotes') === 0) {
@@ -49,9 +47,9 @@ if (strpos($uri, '/api') === 0) {
         $quotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         if ($quotes) {
-            echo json_encode($quotes);
+            echo json_encode(count($quotes) === 1 && isset($params['id']) ? $quotes[0] : $quotes);
         } else {
-            echo json_encode(['message' => 'No Quotes Found']);
+            echo json_encode([]);
         }
     }
 
@@ -64,19 +62,8 @@ if (strpos($uri, '/api') === 0) {
 
         $stmt = $pdo->prepare('INSERT INTO quotes (quote, author_id, category_id) VALUES (?, ?, ?)');
         $stmt->execute([$data['quote'], $data['author_id'], $data['category_id']]);
-        echo json_encode(['id' => $pdo->lastInsertId(), 'quote' => $data['quote'], 'author_id' => $data['author_id'], 'category_id' => $data['category_id']]);
-    }
 
-    if ($method === 'GET' && strpos($endpoint, '/authors') === 0) {
-        if (isset($params['id'])) {
-            $stmt = $pdo->prepare('SELECT id, author FROM authors WHERE id = ?');
-            $stmt->execute([(int)$params['id']]);
-            $author = $stmt->fetch(PDO::FETCH_ASSOC);
-            echo json_encode($author ? $author : ['message' => 'author_id Not Found']);
-        } else {
-            $stmt = $pdo->query('SELECT id, author FROM authors');
-            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-        }
+        echo json_encode(['id' => $pdo->lastInsertId(), 'quote' => $data['quote'], 'author_id' => $data['author_id'], 'category_id' => $data['category_id']]);
     }
 
     if ($method === 'POST' && $endpoint === '/authors') {
@@ -88,19 +75,8 @@ if (strpos($uri, '/api') === 0) {
 
         $stmt = $pdo->prepare('INSERT INTO authors (author) VALUES (?)');
         $stmt->execute([$data['author']]);
-        echo json_encode(['id' => $pdo->lastInsertId(), 'author' => $data['author']]);
-    }
 
-    if ($method === 'GET' && strpos($endpoint, '/categories') === 0) {
-        if (isset($params['id'])) {
-            $stmt = $pdo->prepare('SELECT id, category FROM categories WHERE id = ?');
-            $stmt->execute([(int)$params['id']]);
-            $category = $stmt->fetch(PDO::FETCH_ASSOC);
-            echo json_encode($category ? $category : ['message' => 'category_id Not Found']);
-        } else {
-            $stmt = $pdo->query('SELECT id, category FROM categories');
-            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-        }
+        echo json_encode(['id' => $pdo->lastInsertId(), 'author' => $data['author']]);
     }
 
     if ($method === 'POST' && $endpoint === '/categories') {
@@ -112,6 +88,7 @@ if (strpos($uri, '/api') === 0) {
 
         $stmt = $pdo->prepare('INSERT INTO categories (category) VALUES (?)');
         $stmt->execute([$data['category']]);
+
         echo json_encode(['id' => $pdo->lastInsertId(), 'category' => $data['category']]);
     }
 
