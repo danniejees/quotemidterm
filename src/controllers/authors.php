@@ -8,7 +8,7 @@ function handleGetAuthors() {
     $query = 'SELECT * FROM authors WHERE 1=1';
     $params = [];
 
-    if ($id) {
+    if ($id && is_numeric($id)) {
         $query .= ' AND id = :id';
         $params[':id'] = $id;
     }
@@ -54,6 +54,15 @@ function handlePutAuthor() {
     $id = $input['id'];
     $author = $input['author'];
 
+    $checkStmt = $pdo->prepare('SELECT id FROM authors WHERE id = :id');
+    $checkStmt->execute([':id' => $id]);
+    $existingAuthor = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$existingAuthor) {
+        echo json_encode(['message' => 'author_id Not Found']);
+        return;
+    }
+
     $stmt = $pdo->prepare('UPDATE authors SET author = :author WHERE id = :id');
     $stmt->execute([':author' => $author, ':id' => $id]);
 
@@ -63,8 +72,8 @@ function handlePutAuthor() {
 function handleDeleteAuthor() {
     global $pdo;
 
-    if (!isset($_GET['id'])) {
-        echo json_encode(['message' => 'No Authors Found']);
+    if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+        echo json_encode(['message' => 'author_id Not Found']);
         return;
     }
 
