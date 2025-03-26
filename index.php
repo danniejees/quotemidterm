@@ -59,40 +59,62 @@ if (strpos($uri, '/api') === 0) {
         }
     }
 
+    if ($method === 'GET' && strpos($endpoint, '/authors') === 0) {
+        if (isset($params['id'])) {
+            $stmt = $pdo->prepare('SELECT * FROM authors WHERE id = ?');
+            $stmt->execute([(int)$params['id']]);
+            $author = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($author) {
+                respond(200, $author);
+            } else {
+                respond(404, ['message' => 'author_id Not Found']);
+            }
+        } else {
+            $stmt = $pdo->query('SELECT * FROM authors');
+            $authors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            respond(200, $authors);
+        }
+    }
+
+    if ($method === 'GET' && strpos($endpoint, '/categories') === 0) {
+        if (isset($params['id'])) {
+            $stmt = $pdo->prepare('SELECT * FROM categories WHERE id = ?');
+            $stmt->execute([(int)$params['id']]);
+            $category = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($category) {
+                respond(200, $category);
+            } else {
+                respond(404, ['message' => 'category_id Not Found']);
+            }
+        } else {
+            $stmt = $pdo->query('SELECT * FROM categories');
+            $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            respond(200, $categories);
+        }
+    }
+
     if ($method === 'POST' && $endpoint === '/quotes') {
         $data = json_decode(file_get_contents('php://input'), true);
         if (!isset($data['quote'], $data['author_id'], $data['category_id'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
+        $stmt = $pdo->prepare('SELECT id FROM authors WHERE id = ?');
+        $stmt->execute([$data['author_id']]);
+        if (!$stmt->fetch()) {
+            respond(404, ['message' => 'author_id Not Found']);
+        }
+
+        $stmt = $pdo->prepare('SELECT id FROM categories WHERE id = ?');
+        $stmt->execute([$data['category_id']]);
+        if (!$stmt->fetch()) {
+            respond(404, ['message' => 'category_id Not Found']);
+        }
+
         $stmt = $pdo->prepare('INSERT INTO quotes (quote, author_id, category_id) VALUES (?, ?, ?)');
         $stmt->execute([$data['quote'], $data['author_id'], $data['category_id']]);
 
         respond(201, ['id' => $pdo->lastInsertId(), 'quote' => $data['quote'], 'author_id' => $data['author_id'], 'category_id' => $data['category_id']]);
-    }
-
-    if ($method === 'POST' && $endpoint === '/authors') {
-        $data = json_decode(file_get_contents('php://input'), true);
-        if (!isset($data['author'])) {
-            respond(400, ['message' => 'Missing Required Parameters']);
-        }
-
-        $stmt = $pdo->prepare('INSERT INTO authors (author) VALUES (?)');
-        $stmt->execute([$data['author']]);
-
-        respond(201, ['id' => $pdo->lastInsertId(), 'author' => $data['author']]);
-    }
-
-    if ($method === 'POST' && $endpoint === '/categories') {
-        $data = json_decode(file_get_contents('php://input'), true);
-        if (!isset($data['category'])) {
-            respond(400, ['message' => 'Missing Required Parameters']);
-        }
-
-        $stmt = $pdo->prepare('INSERT INTO categories (category) VALUES (?)');
-        $stmt->execute([$data['category']]);
-
-        respond(201, ['id' => $pdo->lastInsertId(), 'category' => $data['category']]);
     }
 
     respond(404, ['message' => 'Endpoint Not Found']);
