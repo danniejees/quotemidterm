@@ -7,7 +7,22 @@ function handleGetQuotes() {
     $author_id = isset($_GET['author_id']) ? $_GET['author_id'] : null;
     $category_id = isset($_GET['category_id']) ? $_GET['category_id'] : null;
 
-    $query = 'SELECT * FROM quotes WHERE 1=1';
+    if ($id && !is_numeric($id)) {
+        echo json_encode(['message' => 'Invalid quote ID']);
+        return;
+    }
+
+    if ($author_id && !is_numeric($author_id)) {
+        echo json_encode(['message' => 'Invalid author ID']);
+        return;
+    }
+
+    if ($category_id && !is_numeric($category_id)) {
+        echo json_encode(['message' => 'Invalid category ID']);
+        return;
+    }
+
+    $query = 'SELECT id, quote, author_id, category_id FROM quotes WHERE 1=1';
     $params = [];
 
     if ($id) {
