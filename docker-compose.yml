@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  # PHP service
+  php:
+    build: .
+    container_name: php-app
+    ports:
+      - "80:80"  # Expose port 80 (HTTP)
+    volumes:
+      - ./src:/var/www/html  # Link your src folder to /var/www/html in the container
+    networks:
+      - app-network
+
+# Network for communication between containers (optional, if you have other services to connect to)
+networks:
+  app-network:
+    driver: bridge
