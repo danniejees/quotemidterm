@@ -34,10 +34,10 @@ function handleQuotes($method, $params) {
         $stmt->execute($values);
         $quotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($quotes) {
-            respond(200, isset($params['id']) && count($quotes) === 1 ? $quotes[0] : $quotes);
-        } else {
+        if (empty($quotes)) {
             respond(404, ['message' => 'No Quotes Found']);
+        } else {
+            respond(200, isset($params['id']) && count($quotes) === 1 ? $quotes[0] : $quotes);
         }
     }
 
