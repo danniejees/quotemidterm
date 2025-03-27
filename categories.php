@@ -22,7 +22,7 @@ function handleCategories($method, $params) {
 
     if ($method === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (!isset($data['category'])) {
+        if (empty($data) || !isset($data['category'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
@@ -34,7 +34,7 @@ function handleCategories($method, $params) {
 
     if ($method === 'PUT') {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (!isset($data['id'], $data['category'])) {
+        if (empty($data) || !isset($data['id'], $data['category'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
@@ -52,7 +52,7 @@ function handleCategories($method, $params) {
 
     if ($method === 'DELETE') {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (!isset($data['id'])) {
+        if (empty($data) || !isset($data['id'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
