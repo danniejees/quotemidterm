@@ -37,17 +37,13 @@ function handleQuotes($method, $params) {
         if ($quotes) {
             respond(200, isset($params['id']) && count($quotes) === 1 ? $quotes[0] : $quotes);
         } else {
-            if (isset($params['id'])) {
-                respond(404, ['message' => 'No Quotes Found']);
-            } else {
-                respond(404, ['message' => 'No Quotes Found']);
-            }
+            respond(404, ['message' => 'No Quotes Found']);
         }
     }
 
     if ($method === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (!isset($data['quote'], $data['author_id'], $data['category_id'])) {
+        if (empty($data['quote']) || empty($data['author_id']) || empty($data['category_id'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
@@ -71,7 +67,7 @@ function handleQuotes($method, $params) {
 
     if ($method === 'PUT') {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (!isset($data['id'], $data['quote'], $data['author_id'], $data['category_id'])) {
+        if (empty($data['id']) || empty($data['quote']) || empty($data['author_id']) || empty($data['category_id'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
@@ -79,6 +75,18 @@ function handleQuotes($method, $params) {
         $stmt->execute([$data['id']]);
         if (!$stmt->fetch()) {
             respond(404, ['message' => 'No Quotes Found']);
+        }
+
+        $stmt = $pdo->prepare('SELECT id FROM authors WHERE id = ?');
+        $stmt->execute([$data['author_id']]);
+        if (!$stmt->fetch()) {
+            respond(404, ['message' => 'author_id Not Found']);
+        }
+
+        $stmt = $pdo->prepare('SELECT id FROM categories WHERE id = ?');
+        $stmt->execute([$data['category_id']]);
+        if (!$stmt->fetch()) {
+            respond(404, ['message' => 'category_id Not Found']);
         }
 
         $stmt = $pdo->prepare('UPDATE quotes SET quote = ?, author_id = ?, category_id = ? WHERE id = ?');
@@ -89,16 +97,18 @@ function handleQuotes($method, $params) {
 
     if ($method === 'DELETE') {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (!isset($data['id'])) {
+        if (empty($data['id'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
+        }
+
+        $stmt = $pdo->prepare('SELECT id FROM quotes WHERE id = ?');
+        $stmt->execute([$data['id']]);
+        if (!$stmt->fetch()) {
+            respond(404, ['message' => 'No Quotes Found']);
         }
 
         $stmt = $pdo->prepare('DELETE FROM quotes WHERE id = ?');
         $stmt->execute([$data['id']]);
-
-        if ($stmt->rowCount() === 0) {
-            respond(404, ['message' => 'No Quotes Found']);
-        }
 
         respond(200, ['id' => $data['id']]);
     }
