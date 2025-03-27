@@ -5,6 +5,7 @@ header("Access-Control-Allow-Headers: Content-Type");
 header('Content-Type: application/json');
 
 require 'config.php';
+require 'quotes.php';
 require 'authors.php';
 require 'categories.php';
 
