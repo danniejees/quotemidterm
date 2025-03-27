@@ -5,9 +5,9 @@ header("Access-Control-Allow-Headers: Content-Type");
 header('Content-Type: application/json');
 
 require 'config.php';
-
-$uri = $_SERVER['REQUEST_URI'];
-$method = $_SERVER['REQUEST_METHOD'];
+require 'quotes.php';
+require 'authors.php';
+require 'categories.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -20,38 +20,23 @@ function respond($status, $data) {
     exit;
 }
 
-function extractEndpoint($uri) {
-    return strtok(substr($uri, 4), '?');
-}
-
-function extractParams() {
-    parse_str($_SERVER['QUERY_STRING'] ?? '', $params);
-    return $params;
-}
+$uri = $_SERVER['REQUEST_URI'];
+$method = $_SERVER['REQUEST_METHOD'];
 
 if (strpos($uri, '/api') === 0) {
-    $endpoint = extractEndpoint($uri);
-    $params = extractParams();
+    $endpoint = strtok(substr($uri, 4), '?');
+    parse_str($_SERVER['QUERY_STRING'] ?? '', $params);
 
-    switch (true) {
-        case (strpos($endpoint, '/quotes') === 0):
-            require 'quotes.php';
-            handleQuotes($method, $params);
-            break;
-
-        case (strpos($endpoint, '/authors') === 0):
-            require 'authors.php';
-            handleAuthors($method, $params);
-            break;
-
-        case (strpos($endpoint, '/categories') === 0):
-            require 'categories.php';
-            handleCategories($method, $params);
-            break;
-
-        default:
-            respond(404, ['message' => 'Endpoint Not Found']);
+    if (strpos($endpoint, '/quotes') === 0) {
+        handleQuotes($method, $params);
+    } elseif (strpos($endpoint, '/authors') === 0) {
+        handleAuthors($method, $params);
+    } elseif (strpos($endpoint, '/categories') === 0) {
+        handleCategories($method, $params);
+    } else {
+        respond(404, ['message' => 'Endpoint Not Found']);
     }
 } else {
     respond(404, ['message' => 'API Endpoint Not Found']);
 }
+?>
