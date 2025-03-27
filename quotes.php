@@ -2,44 +2,53 @@
 function handleQuotes($method, $params) {
     global $pdo;
 
-    if ($method === 'GET') {
-        $sql = 'SELECT quotes.id, quote, authors.author, categories.category FROM quotes 
-                JOIN authors ON quotes.author_id = authors.id 
-                JOIN categories ON quotes.category_id = categories.id';
-        $conditions = [];
-        $values = [];
+  if ($method === 'GET') {
+    $sql = 'SELECT quotes.id, quote, authors.author, categories.category FROM quotes 
+            JOIN authors ON quotes.author_id = authors.id 
+            JOIN categories ON quotes.category_id = categories.id';
+    $conditions = [];
+    $values = [];
 
-        if (isset($params['id'])) {
-            $conditions[] = 'quotes.id = ?';
-            $values[] = (int)$params['id'];
-        }
-        if (isset($params['author_id'])) {
-            $conditions[] = 'quotes.author_id = ?';
-            $values[] = (int)$params['author_id'];
-        }
-        if (isset($params['category_id'])) {
-            $conditions[] = 'quotes.category_id = ?';
-            $values[] = (int)$params['category_id'];
-        }
+    if (isset($params['id'])) {
+        $conditions[] = 'quotes.id = ?';
+        $values[] = (int)$params['id'];
+    }
+    if (isset($params['author_id'])) {
+        $conditions[] = 'quotes.author_id = ?';
+        $values[] = (int)$params['author_id'];
+    }
+    if (isset($params['category_id'])) {
+        $conditions[] = 'quotes.category_id = ?';
+        $values[] = (int)$params['category_id'];
+    }
 
-        if (!empty($conditions)) {
-            $sql .= ' WHERE ' . implode(' AND ', $conditions);
+    if (!empty($conditions)) {
+        $sql .= ' WHERE ' . implode(' AND ', $conditions);
+    }
+
+    if (!isset($params['id'])) {
+        $sql .= ' LIMIT 25';  
+    }
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($values);
+    $quotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (isset($params['id'])) {
+        if (empty($quotes)) {
+            respond(404, ['message' => 'Quote Not Found']);
+        } else {
+            respond(200, $quotes[0]); 
         }
-
-        if (!isset($params['id'])) {
-            $sql .= ' LIMIT 25';
-        }
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($values);
-        $quotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+    } else {
         if (empty($quotes)) {
             respond(404, ['message' => 'No Quotes Found']);
         } else {
-            respond(200, isset($params['id']) && count($quotes) === 1 ? $quotes[0] : $quotes);
+            respond(200, $quotes);
         }
     }
+}
+
 
     if ($method === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
