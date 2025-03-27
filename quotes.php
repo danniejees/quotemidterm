@@ -1,5 +1,4 @@
 <?php
-// quotes.php
 function handleQuotes($method, $params) {
     global $pdo;
 
@@ -27,10 +26,6 @@ function handleQuotes($method, $params) {
             $sql .= ' WHERE ' . implode(' AND ', $conditions);
         }
 
-        if (!isset($params['id'])) {
-            $sql .= ' LIMIT 25';
-        }
-
         $stmt = $pdo->prepare($sql);
         $stmt->execute($values);
         $quotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -50,6 +45,18 @@ function handleQuotes($method, $params) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
+        $authorCheck = $pdo->prepare('SELECT id FROM authors WHERE id = ?');
+        $authorCheck->execute([$data['author_id']]);
+        if ($authorCheck->rowCount() === 0) {
+            respond(404, ['message' => 'author_id Not Found']);
+        }
+
+        $categoryCheck = $pdo->prepare('SELECT id FROM categories WHERE id = ?');
+        $categoryCheck->execute([$data['category_id']]);
+        if ($categoryCheck->rowCount() === 0) {
+            respond(404, ['message' => 'category_id Not Found']);
+        }
+
         $stmt = $pdo->prepare('INSERT INTO quotes (quote, author_id, category_id) VALUES (?, ?, ?)');
         $stmt->execute([$data['quote'], $data['author_id'], $data['category_id']]);
 
@@ -62,8 +69,24 @@ function handleQuotes($method, $params) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
+        $authorCheck = $pdo->prepare('SELECT id FROM authors WHERE id = ?');
+        $authorCheck->execute([$data['author_id']]);
+        if ($authorCheck->rowCount() === 0) {
+            respond(404, ['message' => 'author_id Not Found']);
+        }
+
+        $categoryCheck = $pdo->prepare('SELECT id FROM categories WHERE id = ?');
+        $categoryCheck->execute([$data['category_id']]);
+        if ($categoryCheck->rowCount() === 0) {
+            respond(404, ['message' => 'category_id Not Found']);
+        }
+
         $stmt = $pdo->prepare('UPDATE quotes SET quote = ?, author_id = ?, category_id = ? WHERE id = ?');
         $stmt->execute([$data['quote'], $data['author_id'], $data['category_id'], $data['id']]);
+
+        if ($stmt->rowCount() === 0) {
+            respond(404, ['message' => 'No Quotes Found']);
+        }
 
         respond(200, ['id' => $data['id'], 'quote' => $data['quote'], 'author_id' => $data['author_id'], 'category_id' => $data['category_id']]);
     }
