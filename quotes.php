@@ -31,7 +31,7 @@ function handleQuotes($method, $params) {
         $quotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         if ($quotes) {
-            respond(200, count($quotes) === 1 && isset($params['id']) ? $quotes[0] : $quotes);
+            respond(200, isset($params['id']) && count($quotes) === 1 ? $quotes[0] : $quotes);
         } else {
             respond(404, ['message' => 'No Quotes Found']);
         }
