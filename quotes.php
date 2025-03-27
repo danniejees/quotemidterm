@@ -37,7 +37,11 @@ function handleQuotes($method, $params) {
         if ($quotes) {
             respond(200, isset($params['id']) && count($quotes) === 1 ? $quotes[0] : $quotes);
         } else {
-            respond(404, ['message' => 'No Quotes Found']);
+            if (isset($params['id'])) {
+                respond(404, ['message' => 'No Quotes Found']);
+            } else {
+                respond(404, ['message' => 'No Quotes Found']);
+            }
         }
     }
 
