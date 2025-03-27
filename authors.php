@@ -22,7 +22,7 @@ function handleAuthors($method, $params) {
 
     if ($method === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (!isset($data['author'])) {
+        if (empty($data) || !isset($data['author'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
@@ -34,7 +34,7 @@ function handleAuthors($method, $params) {
 
     if ($method === 'PUT') {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (!isset($data['id'], $data['author'])) {
+        if (empty($data) || !isset($data['id'], $data['author'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
@@ -52,7 +52,7 @@ function handleAuthors($method, $params) {
 
     if ($method === 'DELETE') {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (!isset($data['id'])) {
+        if (empty($data) || !isset($data['id'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
