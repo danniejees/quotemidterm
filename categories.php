@@ -3,26 +3,30 @@ function handleCategories($method, $params) {
     global $pdo;
 
     if ($method === 'GET') {
+        $sql = 'SELECT * FROM categories';
+        $values = [];
+
         if (isset($params['id'])) {
-            $stmt = $pdo->prepare('SELECT * FROM categories WHERE id = ?');
-            $stmt->execute([(int)$params['id']]);
-            $category = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($category) {
-                respond(200, $category);
-            } else {
-                respond(404, ['message' => 'category_id Not Found']);
-            }
+            $sql .= ' WHERE id = ?';
+            $values[] = (int)$params['id'];
+        }
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($values);
+        $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($categories)) {
+            respond(404, ['message' => 'category_id Not Found']);
+        } else if (isset($params['id'])) {
+            respond(200, $categories[0]);
         } else {
-            $stmt = $pdo->query('SELECT * FROM categories');
-            $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
             respond(200, $categories);
         }
     }
 
     if ($method === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (empty($data) || !isset($data['category'])) {
+        if (empty($data['category'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
@@ -34,25 +38,23 @@ function handleCategories($method, $params) {
 
     if ($method === 'PUT') {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (empty($data) || !isset($data['id'], $data['category'])) {
+        if (empty($data['id']) || empty($data['category'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
-        }
-
-        $stmt = $pdo->prepare('SELECT id FROM categories WHERE id = ?');
-        $stmt->execute([$data['id']]);
-        if (!$stmt->fetch()) {
-            respond(404, ['message' => 'category_id Not Found']);
         }
 
         $stmt = $pdo->prepare('UPDATE categories SET category = ? WHERE id = ?');
         $stmt->execute([$data['category'], $data['id']]);
+
+        if ($stmt->rowCount() === 0) {
+            respond(404, ['message' => 'category_id Not Found']);
+        }
 
         respond(200, ['id' => $data['id'], 'category' => $data['category']]);
     }
 
     if ($method === 'DELETE') {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (empty($data) || !isset($data['id'])) {
+        if (empty($data['id'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
@@ -65,7 +67,5 @@ function handleCategories($method, $params) {
 
         respond(200, ['id' => $data['id']]);
     }
-
-    respond(405, ['message' => 'Method Not Allowed']);
 }
 ?>
