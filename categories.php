@@ -3,7 +3,7 @@ function handleCategories($method, $params) {
     global $pdo;
 
     if ($method === 'GET') {
-        $sql = 'SELECT * FROM categories';
+        $sql = 'SELECT id, category FROM categories';
         $values = [];
 
         if (isset($params['id'])) {
