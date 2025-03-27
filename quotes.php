@@ -26,6 +26,8 @@ function handleQuotes($method, $params) {
             $sql .= ' WHERE ' . implode(' AND ', $conditions);
         }
 
+        $sql .= ' LIMIT 25';
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute($values);
         $quotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
