@@ -8,16 +8,19 @@ function handleGetQuotes() {
     $category_id = isset($_GET['category_id']) ? $_GET['category_id'] : null;
 
     if ($id && !is_numeric($id)) {
+        http_response_code(400);
         echo json_encode(['message' => 'Invalid quote ID']);
         return;
     }
 
     if ($author_id && !is_numeric($author_id)) {
+        http_response_code(400);
         echo json_encode(['message' => 'Invalid author ID']);
         return;
     }
 
     if ($category_id && !is_numeric($category_id)) {
+        http_response_code(400);
         echo json_encode(['message' => 'Invalid category ID']);
         return;
     }
@@ -43,6 +46,7 @@ function handleGetQuotes() {
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     if (empty($results)) {
+        http_response_code(404);
         echo json_encode(['message' => 'No Quotes Found']);
     } else {
         echo json_encode($results);
