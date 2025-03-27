@@ -1,4 +1,4 @@
-<?php
+ <?php
 function handleQuotes($method, $params) {
     global $pdo;
 
@@ -43,7 +43,6 @@ function handleQuotes($method, $params) {
 
     if ($method === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
-
         if (empty($data['quote']) || empty($data['author_id']) || empty($data['category_id'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
@@ -68,8 +67,7 @@ function handleQuotes($method, $params) {
 
     if ($method === 'PUT') {
         $data = json_decode(file_get_contents('php://input'), true);
-
-        if (empty($data['id']) || empty($data['quote']) || empty($data['author_id']) || empty($data['category_id'])) {
+        if (empty($data['id'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
@@ -77,6 +75,10 @@ function handleQuotes($method, $params) {
         $stmt->execute([$data['id']]);
         if (!$stmt->fetch()) {
             respond(404, ['message' => 'No Quotes Found']);
+        }
+
+        if (empty($data['quote']) || empty($data['author_id']) || empty($data['category_id'])) {
+            respond(400, ['message' => 'Missing Required Parameters']);
         }
 
         $stmt = $pdo->prepare('SELECT id FROM authors WHERE id = ?');
@@ -95,6 +97,24 @@ function handleQuotes($method, $params) {
         $stmt->execute([$data['quote'], $data['author_id'], $data['category_id'], $data['id']]);
 
         respond(200, ['id' => $data['id'], 'quote' => $data['quote'], 'author_id' => $data['author_id'], 'category_id' => $data['category_id']]);
+    }
+
+    if ($method === 'DELETE') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (empty($data['id'])) {
+            respond(400, ['message' => 'Missing Required Parameters']);
+        }
+
+        $stmt = $pdo->prepare('SELECT id FROM quotes WHERE id = ?');
+        $stmt->execute([$data['id']]);
+        if (!$stmt->fetch()) {
+            respond(404, ['message' => 'No Quotes Found']);
+        }
+
+        $stmt = $pdo->prepare('DELETE FROM quotes WHERE id = ?');
+        $stmt->execute([$data['id']]);
+
+        respond(200, ['id' => $data['id']]);
     }
 
     respond(405, ['message' => 'Method Not Allowed']);
