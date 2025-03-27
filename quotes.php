@@ -62,13 +62,13 @@ function handleQuotes($method, $params) {
 
             $stmt = $pdo->prepare('INSERT INTO quotes (quote, author_id, category_id) VALUES (?, ?, ?)');
             $stmt->execute([$data['quote'], $data['author_id'], $data['category_id']]);
+            $lastInsertId = $pdo->lastInsertId();
 
-            respond(201, [
-                'id' => $pdo->lastInsertId(),
-                'quote' => $data['quote'],
-                'author_id' => $data['author_id'],
-                'category_id' => $data['category_id']
-            ]);
+            $stmt = $pdo->prepare('SELECT id, quote, author_id, category_id FROM quotes WHERE id = ?');
+            $stmt->execute([$lastInsertId]);
+            $createdQuote = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            respond(201, $createdQuote);
         } catch (Exception $e) {
             respond(500, ['message' => 'Database Error', 'error' => $e->getMessage()]);
         }
