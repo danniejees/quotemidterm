@@ -108,12 +108,16 @@ function handleQuotes($method, $params) {
         }
 
         try {
-            $stmt = $pdo->prepare('DELETE FROM quotes WHERE id = ?');
+            $stmt = $pdo->prepare('SELECT id FROM quotes WHERE id = ?');
             $stmt->execute([$data['id']]);
+            $quote = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($stmt->rowCount() === 0) {
+            if (!$quote) {
                 respond(404, ['message' => 'No Quotes Found']);
             }
+
+            $stmt = $pdo->prepare('DELETE FROM quotes WHERE id = ?');
+            $stmt->execute([$data['id']]);
 
             respond(200, ['id' => $data['id']]);
         } catch (Exception $e) {
