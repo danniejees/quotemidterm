@@ -9,14 +9,14 @@ require 'config.php';
 $uri = $_SERVER['REQUEST_URI'];
 $method = $_SERVER['REQUEST_METHOD'];
 
-function respond($status_code, $data) {
-    http_response_code($status_code);
-    echo json_encode($data);
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+function respond($status, $data) {
+    http_response_code($status);
+    echo json_encode($data);
     exit;
 }
 
@@ -24,7 +24,7 @@ if (strpos($uri, '/api') === 0) {
     $endpoint = strtok(substr($uri, 4), '?');
     parse_str($_SERVER['QUERY_STRING'] ?? '', $params);
 
-    if ($method === 'GET' && $endpoint === '/quotes') {
+    if ($method === 'GET' && strpos($endpoint, '/quotes') === 0) {
         $sql = 'SELECT quotes.id, quote, authors.author, categories.category FROM quotes 
                 JOIN authors ON quotes.author_id = authors.id 
                 JOIN categories ON quotes.category_id = categories.id';
@@ -59,40 +59,6 @@ if (strpos($uri, '/api') === 0) {
         }
     }
 
-    if ($method === 'GET' && $endpoint === '/authors') {
-        if (isset($params['id'])) {
-            $stmt = $pdo->prepare('SELECT * FROM authors WHERE id = ?');
-            $stmt->execute([(int)$params['id']]);
-            $author = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($author) {
-                respond(200, $author);
-            } else {
-                respond(404, ['message' => 'author_id Not Found']);
-            }
-        } else {
-            $stmt = $pdo->query('SELECT * FROM authors');
-            $authors = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            respond(200, $authors);
-        }
-    }
-
-    if ($method === 'GET' && $endpoint === '/categories') {
-        if (isset($params['id'])) {
-            $stmt = $pdo->prepare('SELECT * FROM categories WHERE id = ?');
-            $stmt->execute([(int)$params['id']]);
-            $category = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($category) {
-                respond(200, $category);
-            } else {
-                respond(404, ['message' => 'category_id Not Found']);
-            }
-        } else {
-            $stmt = $pdo->query('SELECT * FROM categories');
-            $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            respond(200, $categories);
-        }
-    }
-
     if ($method === 'POST' && $endpoint === '/quotes') {
         $data = json_decode(file_get_contents('php://input'), true);
         if (!isset($data['quote'], $data['author_id'], $data['category_id'])) {
@@ -117,8 +83,41 @@ if (strpos($uri, '/api') === 0) {
         respond(201, ['id' => $pdo->lastInsertId(), 'quote' => $data['quote'], 'author_id' => $data['author_id'], 'category_id' => $data['category_id']]);
     }
 
+    if ($method === 'PUT' && $endpoint === '/quotes') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!isset($data['id'], $data['quote'], $data['author_id'], $data['category_id'])) {
+            respond(400, ['message' => 'Missing Required Parameters']);
+        }
+
+        $stmt = $pdo->prepare('SELECT id FROM quotes WHERE id = ?');
+        $stmt->execute([$data['id']]);
+        if (!$stmt->fetch()) {
+            respond(404, ['message' => 'No Quotes Found']);
+        }
+
+        $stmt = $pdo->prepare('UPDATE quotes SET quote = ?, author_id = ?, category_id = ? WHERE id = ?');
+        $stmt->execute([$data['quote'], $data['author_id'], $data['category_id'], $data['id']]);
+
+        respond(200, ['id' => $data['id'], 'quote' => $data['quote'], 'author_id' => $data['author_id'], 'category_id' => $data['category_id']]);
+    }
+
+    if ($method === 'DELETE' && $endpoint === '/quotes') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!isset($data['id'])) {
+            respond(400, ['message' => 'Missing Required Parameters']);
+        }
+
+        $stmt = $pdo->prepare('DELETE FROM quotes WHERE id = ?');
+        $stmt->execute([$data['id']]);
+
+        if ($stmt->rowCount() === 0) {
+            respond(404, ['message' => 'No Quotes Found']);
+        }
+
+        respond(200, ['id' => $data['id']]);
+    }
+
     respond(404, ['message' => 'Endpoint Not Found']);
 } else {
     respond(404, ['message' => 'API Endpoint Not Found']);
 }
-
