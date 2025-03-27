@@ -67,7 +67,7 @@ function handleQuotes($method, $params) {
 
     if ($method === 'PUT') {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (empty($data['id']) || empty($data['quote']) || empty($data['author_id']) || empty($data['category_id'])) {
+        if (empty($data['id'])) {
             respond(400, ['message' => 'Missing Required Parameters']);
         }
 
@@ -75,6 +75,10 @@ function handleQuotes($method, $params) {
         $stmt->execute([$data['id']]);
         if (!$stmt->fetch()) {
             respond(404, ['message' => 'No Quotes Found']);
+        }
+
+        if (empty($data['quote']) || empty($data['author_id']) || empty($data['category_id'])) {
+            respond(400, ['message' => 'Missing Required Parameters']);
         }
 
         $stmt = $pdo->prepare('SELECT id FROM authors WHERE id = ?');
