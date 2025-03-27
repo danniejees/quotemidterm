@@ -29,9 +29,9 @@ $endpoint = substr($uri, 4);
 
 if ($method === 'GET' && strpos($endpoint, '/quotes') === 0) {
     $sql = 'SELECT quotes.id AS id, quotes.quote AS quote, authors.author AS author, categories.category AS category 
-        FROM quotes 
-        JOIN authors ON quotes.author_id = authors.id 
-        JOIN categories ON quotes.category_id = categories.id';
+            FROM quotes 
+            JOIN authors ON quotes.author_id = authors.id 
+            JOIN categories ON quotes.category_id = categories.id';
 
     $conditions = [];
     $values = [];
@@ -57,15 +57,14 @@ if ($method === 'GET' && strpos($endpoint, '/quotes') === 0) {
     $stmt->execute($values);
     $quotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-   if ($quotes) {
-    if (count($quotes) === 1 && isset($params['id'])) {
-        respond(200, $quotes[0]);
+    if ($quotes) {
+        if (count($quotes) === 1 && isset($params['id'])) {
+            respond(200, $quotes[0]);
+        }
+        respond(200, $quotes);
+    } else {
+        respond(200, ['message' => 'No Quotes Found']);
     }
-    respond(200, $quotes);
-} else {
-    respond(404, ['message' => 'No Quotes Found']);
-}
-
 }
 
 if ($method === 'GET' && strpos($endpoint, '/authors') === 0) {
@@ -76,7 +75,7 @@ if ($method === 'GET' && strpos($endpoint, '/authors') === 0) {
         if ($author) {
             respond(200, $author);
         } else {
-            respond(404, ['message' => 'author_id Not Found']);
+            respond(200, ['message' => 'author_id Not Found']);
         }
     } else {
         $stmt = $pdo->query('SELECT * FROM authors');
@@ -93,36 +92,13 @@ if ($method === 'GET' && strpos($endpoint, '/categories') === 0) {
         if ($category) {
             respond(200, $category);
         } else {
-            respond(404, ['message' => 'category_id Not Found']);
+            respond(200, ['message' => 'category_id Not Found']);
         }
     } else {
         $stmt = $pdo->query('SELECT * FROM categories');
         $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
         respond(200, $categories);
     }
-}
-
-if ($method === 'POST' && $endpoint === '/quotes') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    if (!isset($data['quote'], $data['author_id'], $data['category_id'])) {
-        respond(400, ['message' => 'Missing Required Parameters']);
-    }
-
-    $stmt = $pdo->prepare('SELECT id FROM authors WHERE id = ?');
-    $stmt->execute([$data['author_id']]);
-    if (!$stmt->fetch()) {
-        respond(404, ['message' => 'author_id Not Found']);
-    }
-
-    $stmt = $pdo->prepare('SELECT id FROM categories WHERE id = ?');
-    $stmt->execute([$data['category_id']]);
-    if (!$stmt->fetch()) {
-        respond(404, ['message' => 'category_id Not Found']);
-    }
-
-    $stmt = $pdo->prepare('INSERT INTO quotes (quote, author_id, category_id) VALUES (?, ?, ?)');
-    $stmt->execute([$data['quote'], $data['author_id'], $data['category_id']]);
-    respond(201, ['id' => $pdo->lastInsertId(), 'quote' => $data['quote'], 'author_id' => $data['author_id'], 'category_id' => $data['category_id']]);
 }
 
 respond(404, ['message' => 'Endpoint Not Found']);
